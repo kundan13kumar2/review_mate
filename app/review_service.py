@@ -1,5 +1,6 @@
 from typing import List, Dict
 
+import re
 from httpx import get
 from . import github_client as gh
 from .config import settings
@@ -16,6 +17,9 @@ def _hunk_start_line(patch: str | None) -> int | None:
     import re
     m = re.search(r"@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", patch)
     return int(m.group(1)) if m else None
+
+def _get_runtime_promt(patch: str) -> str:
+    return re.findall(r'AI_REVIEW_PROMPT:\s*(.+)', patch)
 
 async def review_pull_request(repo_full_name: str, pr_number: int):
     owner, repo = repo_full_name.split("/" , 1)
@@ -35,13 +39,15 @@ async def review_pull_request(repo_full_name: str, pr_number: int):
     print(files)
     for f in files:
         patch = f.get('patch')
-        print(patch)
+        prompt = _get_runtime_promt(patch)
+        print(prompt)
         if not patch or len(patch) > settings.review_max_patch_chars:
             continue
 
         lang = _lang_from_path(f.get('filename'))
         
         review = await review_file(
+            prompt = prompt,
             file_path = f["filename"],
             patch = patch,
             language_hint = lang,
