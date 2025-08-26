@@ -1,6 +1,10 @@
 from fastapi import APIRouter, Request, Response, Depends
+import httpx
+
+from app.ai_client import review_git_lab_mr
 from .deps import verify_signature, github_headers
 from .review_service import review_pull_request
+from .review_service import review_gitLab_PR
 
 router = APIRouter(prefix="/api")
 
@@ -24,3 +28,24 @@ async def webhook(req:Request, res: Response, hdrs=Depends(github_headers)):
         asyncio.create_task(review_pull_request(repo, pr_number))
     
     return {"ok": True}
+
+
+@router.post("/gitlab/webhook")
+async def gitLabWebhook(request:Request):
+    payload = await request.json()
+
+    if payload.get("object_kind") != "merge_request":
+        return {"msg":"ignored"}
+        
+    mr = payload["object_attributes"]
+    project_id = mr["target_project_id"]
+    mr_iid = mr["iid"]
+
+    print(mr)
+    print(project_id)
+    print(mr_iid)
+    
+    import asyncio
+    asyncio.create_task(review_gitLab_PR(project_id, mr_iid))
+    return {"ok": True}
+

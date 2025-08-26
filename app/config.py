@@ -15,5 +15,8 @@ class Settings(BaseModel):
     openai_model: str = os.getenv("OPENAI_MODEL","gpt-4o-mini")
     review_max_files: int = int(os.getenv("REVIEW_MAX_FILE","30"))
     review_max_patch_chars: int = int(os.getenv("REVIEW_MAX_PATCH_CHARS",60000))
+    gitlab_token: str = os.environ["GITLAB_TOKEN"]
+    gemini_key: str = os.environ["GEMINI_API_KEY"]
+    gemini_model: str = os.environ["GEMINI_MODEL"]
 
 settings = Settings()

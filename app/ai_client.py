@@ -1,5 +1,6 @@
 from openai import OpenAI
 from .config import settings
+import google.generativeai as genai
 
 client = OpenAI(api_key=settings.open_ai_key)
 
@@ -41,3 +42,12 @@ async def summarize_pr(title: str, body: str | None) -> str:
     )
 
     return (resp.choices[0].message.content or "").strip()
+
+async def review_git_lab_mr(diff_data:str):
+    model = genai.GenerativeModel(settings.gemini_model)
+    prompt= f"""
+        {SYSTEM}:
+        {diff_data}
+    """
+    response = model.generate_content(prompt)
+    return response.text

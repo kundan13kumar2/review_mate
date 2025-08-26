@@ -2,7 +2,10 @@ from typing import List, Dict
 
 import re
 from httpx import get
+
+from app import ai_client, gitlab_client
 from . import github_client as gh
+from . import gitlab_client as gtlab
 from .config import settings
 
 
@@ -20,6 +23,19 @@ def _hunk_start_line(patch: str | None) -> int | None:
 
 def _get_runtime_promt(patch: str) -> str:
     return re.findall(r'AI_REVIEW_PROMPT:\s*(.+)', patch)
+
+
+async def review_gitLab_PR(projectId:str, mrId:str):
+    all_diffs = await gtlab.get_pr_diff(projectId, mrId)
+    print("prdiff",all_diffs)
+    review_comment = ai_client.review_git_lab_mr(all_diffs)
+    print("KUnda:",review_comment)
+    if not review_comment:
+        print("Not review")
+        return
+    else:
+        gitlab_client.create_review(projectId, mrId, review_comment)
+
 
 async def review_pull_request(repo_full_name: str, pr_number: int):
     owner, repo = repo_full_name.split("/" , 1)
